@@ -3,6 +3,7 @@ import 'package:ge_vision/model/category.dart';
 import 'package:ge_vision/size_configs.dart';
 import 'package:ge_vision/app_styles.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
+import 'package:camera/camera.dart';
 
 class DetailPage extends StatefulWidget {
   final Category category;
@@ -17,7 +18,31 @@ class DetailPage extends StatefulWidget {
 }
 
 class _DetailPageState extends State<DetailPage> {
-  int selectedGroup = -1; 
+  int selectedGroup = -1;
+  late List<CameraDescription> cameras;
+  late CameraController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    initializeCamera();
+  }
+
+  Future<void> initializeCamera() async {
+    cameras = await availableCameras();
+    controller = CameraController(cameras[0], ResolutionPreset.medium);
+    await controller.initialize();
+    if (!mounted) {
+      return;
+    }
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +82,7 @@ class _DetailPageState extends State<DetailPage> {
               horizontal: SizeConfig.defaultPaddingSize * 1.5,
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, 
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 buildNavItem(
                   icon: LineAwesomeIcons.bookmark,
@@ -77,6 +102,9 @@ class _DetailPageState extends State<DetailPage> {
               ],
             ),
           ),
+          Expanded(
+            child: _buildCameraPreview(),
+          ),
         ],
       ),
     );
@@ -91,16 +119,15 @@ class _DetailPageState extends State<DetailPage> {
 
     return GestureDetector(
       onTap: () {
-        
         setState(() {
-          selectedGroup = index; 
+          selectedGroup = index;
         });
       },
       child: Container(
-        padding: EdgeInsets.all(10), 
+        padding: EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isSelected ? kPrimaryColor : Colors.white, 
-          borderRadius: BorderRadius.circular(10), 
+          color: isSelected ? kPrimaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
@@ -108,11 +135,11 @@ class _DetailPageState extends State<DetailPage> {
               icon,
               color: isSelected ? Colors.white : Color.fromARGB(255, 64, 64, 64),
             ),
-            SizedBox(width: 8), 
+            SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12, 
+                fontSize: 12,
                 color: isSelected ? Colors.white : Color.fromARGB(255, 64, 64, 64),
                 fontWeight: FontWeight.w500,
               ),
@@ -120,6 +147,18 @@ class _DetailPageState extends State<DetailPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCameraPreview() {
+    if (controller == null || !controller.value.isInitialized) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+    return AspectRatio(
+      aspectRatio: controller.value.aspectRatio,
+      child: CameraPreview(controller),
     );
   }
 }
