@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ge_vision/model/category.dart';
 import 'package:ge_vision/size_configs.dart';
 import 'package:ge_vision/app_styles.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
@@ -15,14 +16,14 @@ class MenuPage extends StatelessWidget {
         elevation: 0,
         title: Image.asset(
           'assets/images/LOGOi.png',
-          height: SizeConfig.blockSizeH! * 14, // Decrease the height to make it smaller
+          height: SizeConfig.blockSizeH! * 14,
         ),
         centerTitle: true,
         leading: Transform.translate(
           offset: Offset(SizeConfig.defaultPaddingSize * 0.2, 0),
           child: Container(
             height: SizeConfig.blockSizeH! * 3,
-            width: SizeConfig.blockSizeH! * 3, // Increase the width to make it larger
+            width: SizeConfig.blockSizeH! * 3,
             decoration: BoxDecoration(
               border: Border.all(color: kPrimaryColor, width: 1),
               borderRadius: BorderRadius.circular(10),
@@ -57,43 +58,61 @@ class MenuPage extends StatelessWidget {
           horizontal: SizeConfig.defaultPaddingSize * 1.5,
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align icons at the ends
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Navitem(icon: Icon(LineAwesomeIcons.star)),
             Container(
-              padding: EdgeInsets.all(8), // Add padding to the container
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: kSecondaryColor.withOpacity(0.3), // Set the background color
+                color: kSecondaryColor.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(LineAwesomeIcons.home, color: kPrimaryColor), // Set the color of the icon
+              child: Expanded(
+                child: Icon(LineAwesomeIcons.home, color: kPrimaryColor),
+              ),
             ),
-            
             Navitem(icon: Icon(LineAwesomeIcons.cog)),
           ],
         ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(SizeConfig.defaultPaddingSize),
-        child: SafeArea(child: Column(
-          children: [
-            TextField(
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(15))
+        child: SafeArea(
+          child: Column(
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(15)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(15)),
+                  ),
+                  fillColor: kSecondaryColor.withOpacity(0.3),
+                  filled: true,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: SizeConfig.defaultPaddingSize),
+                  prefixIcon: Icon(LineAwesomeIcons.search),
+                  hintText: 'Find the anatomy you desire',
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(15))
-                ),
-                fillColor: kSecondaryColor.withOpacity(0.3),
-                filled: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: SizeConfig.defaultPaddingSize),
-                prefixIcon: Icon(LineAwesomeIcons.search),
-                hintText: 'Find the anatomy you desire'
               ),
-            )
-          ],
-        )),
+              SizedBox(height: SizeConfig.blockSizeH! *6),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2, // Display two cards in each row
+                  childAspectRatio: 0.95, // Adjust card size here
+                ),
+                itemCount: demoCategories.length,
+                itemBuilder: (context, index) {
+                  final category = demoCategories[index];
+                  return CategoryCard(category: category);
+                },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -101,9 +120,9 @@ class MenuPage extends StatelessWidget {
 
 class Navitem extends StatelessWidget {
   const Navitem({
-    super.key,
+    Key? key,
     required this.icon,
-  });
+  }) : super(key: key);
 
   final Icon icon;
 
@@ -112,6 +131,53 @@ class Navitem extends StatelessWidget {
     return GestureDetector(
       onTap: () {},
       child: icon,
+    );
+  }
+}
+
+class CategoryCard extends StatelessWidget {
+  final Category category;
+
+  const CategoryCard({
+    Key? key,
+    required this.category,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Image.asset(
+            category.icon,
+            width: double.infinity,
+            fit: BoxFit.cover, // Use the icon as the background image
+          ),
+          Container(
+            padding: EdgeInsets.all(SizeConfig.defaultPaddingSize),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(15),
+                bottomRight: Radius.circular(15),
+              ),
+            ),
+            alignment: Alignment.bottomCenter,
+            child: Text(
+              category.name,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
