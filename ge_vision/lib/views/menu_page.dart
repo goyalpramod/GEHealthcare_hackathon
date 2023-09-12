@@ -4,6 +4,7 @@ import 'package:ge_vision/model/category.dart';
 import 'package:ge_vision/size_configs.dart';
 import 'package:ge_vision/app_styles.dart';
 import 'package:line_awesome_flutter/line_awesome_flutter.dart';
+import 'package:ge_vision/views/detail_page.dart';
 
 class MenuPage extends StatelessWidget {
   const MenuPage({Key? key}) : super(key: key);
@@ -24,12 +25,8 @@ class MenuPage extends StatelessWidget {
           child: Container(
             height: SizeConfig.blockSizeH! * 3,
             width: SizeConfig.blockSizeH! * 3,
-            decoration: BoxDecoration(
-              border: Border.all(color: kPrimaryColor, width: 1),
-              borderRadius: BorderRadius.circular(10),
-            ),
             child: IconButton(
-              icon: Icon(LineAwesomeIcons.arrow_right, color: kPrimaryColor),
+              icon: Icon(Icons.arrow_back_ios, color: kPrimaryColor),
               onPressed: () {
                 Navigator.pop(context);
               },
@@ -60,7 +57,7 @@ class MenuPage extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Navitem(icon: Icon(LineAwesomeIcons.star)),
+            NavItem(icon: Icon(LineAwesomeIcons.star)),
             Container(
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -71,7 +68,7 @@ class MenuPage extends StatelessWidget {
                 child: Icon(LineAwesomeIcons.home, color: kPrimaryColor),
               ),
             ),
-            Navitem(icon: Icon(LineAwesomeIcons.cog)),
+            NavItem(icon: Icon(LineAwesomeIcons.cog)),
           ],
         ),
       ),
@@ -87,6 +84,7 @@ class MenuPage extends StatelessWidget {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(15)),
+                    borderSide: BorderSide(color: kPrimaryColor),
                   ),
                   fillColor: kSecondaryColor.withOpacity(0.3),
                   filled: true,
@@ -96,13 +94,13 @@ class MenuPage extends StatelessWidget {
                   hintText: 'Find the anatomy you desire',
                 ),
               ),
-              SizedBox(height: SizeConfig.blockSizeH! *6),
+              SizedBox(height: SizeConfig.blockSizeH! * 6),
               GridView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2, // Display two cards in each row
-                  childAspectRatio: 0.95, // Adjust card size here
+                  crossAxisCount: 2, 
+                  childAspectRatio: 0.95,
                 ),
                 itemCount: demoCategories.length,
                 itemBuilder: (context, index) {
@@ -118,10 +116,10 @@ class MenuPage extends StatelessWidget {
   }
 }
 
-class Navitem extends StatelessWidget {
-  const Navitem({
+class NavItem extends StatelessWidget {
+  const NavItem({
     Key? key,
-    required this.icon,
+    required this.icon
   }) : super(key: key);
 
   final Icon icon;
@@ -145,38 +143,46 @@ class CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          Image.asset(
-            category.icon,
-            width: double.infinity,
-            fit: BoxFit.cover, // Use the icon as the background image
-          ),
-          Container(
-            padding: EdgeInsets.all(SizeConfig.defaultPaddingSize),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(15),
-                bottomRight: Radius.circular(15),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => DetailPage(category: category)),
+        );
+      },
+      child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: [
+            Image.asset(
+              category.icon,
+              width: double.infinity,
+              fit: BoxFit.cover, 
+            ),
+            Container(
+              padding: EdgeInsets.all(SizeConfig.defaultPaddingSize),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(15),
+                  bottomRight: Radius.circular(15),
+                ),
+              ),
+              alignment: Alignment.bottomCenter,
+              child: Text(
+                category.name,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
-            alignment: Alignment.bottomCenter,
-            child: Text(
-              category.name,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

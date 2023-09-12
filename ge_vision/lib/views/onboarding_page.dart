@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ge_vision/views/menu_page.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:ge_vision/app_styles.dart';
-import 'package:ge_vision/main.dart';
 import 'package:ge_vision/model/onboard_data.dart';
 import 'package:ge_vision/size_configs.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import './pages.dart';
 import '../widgets/widgets.dart';
 
@@ -37,7 +34,6 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
-    double sizeH = SizeConfig.blockSizeH!;
     double sizeV = SizeConfig.blockSizeV!;
     double logoHeight = sizeV * 7;
 

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ge_vision/app_styles.dart';
 import 'package:ge_vision/size_configs.dart';
 
 class MyTextButton extends StatelessWidget {
