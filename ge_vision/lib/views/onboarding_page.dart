@@ -21,31 +21,37 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
 
   PageController _pageController = PageController(initialPage: 0);
 
- AnimatedContainer dotIndicator(index) {
-  return AnimatedContainer(
-    margin: EdgeInsets.only(right: 5),
-    duration: Duration(milliseconds: 400),
-    height: 12,
-    width: 12,
-    decoration: BoxDecoration(
-      color: currentPage == index ? kPrimaryColor : kSecondaryColor,
-      borderRadius: BorderRadius.circular(6),
-    ),
-  );
-}
+  AnimatedContainer dotIndicator(index) {
+    return AnimatedContainer(
+      margin: EdgeInsets.only(right: 5),
+      duration: Duration(milliseconds: 400),
+      height: 12,
+      width: 12,
+      decoration: BoxDecoration(
+        color: currentPage == index ? kPrimaryColor : kSecondaryColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     SizeConfig().init(context);
     double sizeH = SizeConfig.blockSizeH!;
     double sizeV = SizeConfig.blockSizeV!;
+    double logoHeight = sizeV * 7;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
+            Container(
+              height: logoHeight,
+              child: Image.asset('assets/images/LOGOi.png'),
+            ),
             Expanded(
-              flex: 9,
+              flex: 7,
               child: PageView.builder(
                 controller: _pageController,
                 onPageChanged: (value) {
@@ -57,19 +63,18 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                 itemBuilder: (context, index) => Column(
                   children: [
                     SizedBox(
-                      height: sizeV * 4,
+                      height: sizeV * 3,
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(left:12.0, right:12.0),
+                      padding: const EdgeInsets.only(left: 12.0, right: 12.0),
                       child: Text(
                         onboardingContents[index].title,
                         style: kTitle,
                         textAlign: TextAlign.center,
                       ),
                     ),
-                    
                     Container(
-                      height: sizeV * 50,
+                      height: sizeV * 45,
                       child: Image.asset(
                         onboardingContents[index].image,
                         fit: BoxFit.contain,
@@ -79,7 +84,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                       height: sizeV * 3,
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(left:12.0, right:12.0),
+                      padding: const EdgeInsets.only(left: 12.0, right: 12.0),
                       child: RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(style: kBodyText1, children: [
@@ -96,12 +101,15 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                               color: Colors.black,
                             ),
                           ),
-                          TextSpan(text: 'to elevate your medical knowledge. Learn with unprecedented depth and clarity.'),
+                          TextSpan(
+                            text:
+                                'to elevate your medical knowledge. Learn with unprecedented depth and clarity.',
+                          ),
                         ]),
                       ),
                     ),
                     SizedBox(
-                      height: sizeV * 4,
+                      height: sizeV * 3,
                     ),
                   ],
                 ),
@@ -129,8 +137,14 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                           children: [
                             OnBoardBtn(
                               name: 'Skip',
-                              onPressed: () {},
-                              backgroundColor: kPrimaryColor,
+                              onPressed: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (_) => MenuPage()));
+                              },
+                              backgroundColor: Colors.white,
+                              textColor: kPrimaryColor,
                             ),
                             Row(
                               children: List.generate(
@@ -147,6 +161,7 @@ class _OnBoardingPageState extends State<OnBoardingPage> {
                                 );
                               },
                               backgroundColor: kPrimaryColor,
+                              textColor: Colors.white,
                             ),
                           ],
                         ),

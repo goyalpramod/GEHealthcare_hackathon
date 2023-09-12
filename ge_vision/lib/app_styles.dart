@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'size_configs.dart';
 
 Color kPrimaryColor = Color(0xff5C0FD1);
-Color kSecondaryColor = Color(0xffA084CA);
+Color kSecondaryColor = Color(0xff916BBF);
 
 final kTitle = TextStyle(
   fontFamily: ' SF Pro Text',
