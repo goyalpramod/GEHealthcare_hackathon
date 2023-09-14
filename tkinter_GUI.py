@@ -1,0 +1,239 @@
+import cv2
+import mediapipe as mp
+import numpy as np
+import math
+import time
+import tkinter as tk
+
+from PIL import ImageTk, Image
+
+skull_toggle = True
+liver_toggle = True
+heart_toggle = True
+info_toggle = True
+
+
+def toggle_skull():
+    global skull_toggle
+    skull_toggle = not skull_toggle
+
+
+def toggle_liver():
+    global liver_toggle
+    liver_toggle = not liver_toggle
+
+
+def toggle_heart():
+    global heart_toggle
+    heart_toggle = not heart_toggle
+
+
+def toggle_info_popup():
+    global info_toggle
+    info_toggle = not info_toggle
+
+
+mp_drawing = mp.solutions.drawing_utils
+mp_pose = mp.solutions.pose
+
+pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+
+
+def load_image(image_path):
+    img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+    if img.shape[2] != 4:
+        alpha_channel = np.ones(img.shape[:2], dtype=img.dtype) * 255
+        img = cv2.merge((img, alpha_channel))
+    return img
+
+
+def get_landmarks(frame, pose):
+    RGB = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = pose.process(RGB)
+    pose_landmarks = None
+    if results.pose_landmarks:
+        pose_landmarks = results.pose_landmarks
+    return pose_landmarks
+
+
+def overlay_skull_image(frame, overlay_img, landmarks):
+    if landmarks:
+        left_eye = landmarks.landmark[mp_pose.PoseLandmark.LEFT_EYE_INNER]
+        left_ear = landmarks.landmark[mp_pose.PoseLandmark.LEFT_EAR]
+        right_ear = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_EAR]
+        right_mouth = landmarks.landmark[mp_pose.PoseLandmark.MOUTH_RIGHT]
+        print(left_eye.visibility)
+        if (left_ear.visibility > 0.1 and right_ear.visibility > 0.5 and left_eye.visibility > 0.9
+                and right_mouth.visibility > 0.9):
+            # Calculate rotation angle in radians
+            radians = math.atan2(right_ear.y - left_ear.y, right_ear.x - left_ear.x)
+
+            # Convert to degrees
+            angle = -(math.degrees(radians) + 180) % 360
+
+            # Rotate the overlay image
+            m = cv2.getRotationMatrix2D(tuple(np.divide(overlay_img.shape[:2], 2)), angle, 1)
+            overlay_img = cv2.warpAffine(overlay_img, m, overlay_img.shape[:2])
+
+            skull_x = int((left_ear.x + (1 / 2) * (right_ear.x - left_ear.x)) * frame.shape[1])
+            skull_y = int(max(left_ear.y, right_ear.y) * frame.shape[0])
+
+            dist_ears = np.sqrt((right_ear.x - left_ear.x) ** 2 + (right_ear.y - left_ear.y) ** 2)
+            skull_width = int(frame.shape[1] * dist_ears * 2.7)
+            aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
+            skull_height = int(skull_width / aspect_ratio)
+
+            skull_image_resized = cv2.resize(overlay_img, (skull_width, skull_height), interpolation=cv2.INTER_AREA)
+
+            skull_y = min(max(skull_y - skull_height // 2, 0), frame.shape[0] - skull_height)
+            skull_x = min(max(skull_x - skull_width // 2, 0), frame.shape[1] - skull_width)
+
+            skull_channels = cv2.split(skull_image_resized)
+
+            mask = cv2.cvtColor(skull_channels[3], cv2.COLOR_GRAY2BGR)
+            mask = mask / 255.0
+
+            r, g, b, a = skull_channels
+            skull_channels_rgb = cv2.merge([r, g, b])
+            skull_portion = frame[skull_y:skull_y + skull_height, skull_x:skull_x + skull_width]
+
+            overlay = skull_channels_rgb * mask + skull_portion * (1 - mask)
+            overlay = np.uint8(overlay)
+
+            frame[skull_y:skull_y + skull_height, skull_x:skull_x + skull_width] = overlay
+        return frame
+
+
+def overlay_liver_image(frame, overlay_img, location, landmarks):
+    if landmarks:
+        right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+        right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
+        if right_hip.visibility > 0.1:
+            overlay_x, overlay_y = location
+            liver_x = int((right_shoulder.x + (3 / 5) * (right_hip.x - right_shoulder.x)) * frame.shape[1]) - 40
+            liver_y = int((right_shoulder.y + (3 / 5) * (right_hip.y - right_shoulder.y)) * frame.shape[0])
+            dist_shoulder_hip = np.sqrt((right_hip.x - right_shoulder.x) ** 2 + (right_hip.y - right_shoulder.y) ** 2)
+            liver_width = int(frame.shape[1] * dist_shoulder_hip * 0.4)
+            aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
+            liver_height = int(liver_width / aspect_ratio)
+            liver_image_resized = cv2.resize(overlay_img, (liver_width, liver_height), interpolation=cv2.INTER_AREA)
+            liver_y = min(max(liver_y, 0), frame.shape[0] - liver_height)
+            liver_x = min(max(liver_x, 0), frame.shape[1] - liver_width)
+            liver_channels = cv2.split(liver_image_resized)
+            mask = cv2.cvtColor(liver_channels[3], cv2.COLOR_GRAY2BGR)
+            mask = mask / 255.0
+            r, g, b, a = liver_channels
+            liver_channels_rgb = cv2.merge([r, g, b])
+            liver_portion = frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width]
+            overlay = liver_channels_rgb * mask + liver_portion * (1 - mask)
+            overlay = np.uint8(overlay)
+            frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width] = overlay
+    return frame
+
+
+def overlay_heart_image(frame, overlay_img, landmarks):
+    if landmarks:
+        left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
+        right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+        current_time=time.time()
+        scale_factor = 1 + 0.05 * math.sin(15 * current_time)
+        heart_x = int((left_shoulder.x + (1 / 2) * (right_shoulder.x - left_shoulder.x)) * frame.shape[1]) - 30
+        heart_y = int((left_shoulder.y + (1 / 2) * (right_shoulder.y - left_shoulder.y)) * frame.shape[0]) + 30
+
+        dist_shoulder = np.sqrt((right_shoulder.x - left_shoulder.x) ** 2 + (right_shoulder.y - left_shoulder.y) ** 2)
+        heart_width = int(scale_factor * frame.shape[1] * dist_shoulder * 0.6)
+        aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
+        heart_height = int(scale_factor * heart_width / aspect_ratio)
+
+        heart_image_resized = cv2.resize(overlay_img, (heart_width, heart_height), interpolation=cv2.INTER_AREA)
+
+        heart_y = min(max(heart_y, 0), frame.shape[0] - heart_height)
+        heart_x = min(max(heart_x, 0), frame.shape[1] - heart_width)
+
+        heart_channels = cv2.split(heart_image_resized)
+
+        mask = cv2.cvtColor(heart_channels[3], cv2.COLOR_GRAY2BGR)
+        mask = mask / 255.0
+
+        r, g, b, a = heart_channels
+        heart_channels_rgb = cv2.merge([r, g, b])
+        heart_portion = frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width]
+
+        overlay = heart_channels_rgb * mask + heart_portion * (1 - mask)
+        overlay = np.uint8(overlay)
+
+        frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width] = overlay
+
+        # Create a rectangle for the pop up and add some text
+        info_box_origin = (heart_x-80, heart_y - 20)  # Placing the info box above the heart
+        cv2.rectangle(frame,
+                      info_box_origin,
+                      (info_box_origin[0] + 340, info_box_origin[1] - 40),
+                      (255, 225, 255),
+                      cv2.FILLED)
+        cv2.putText(frame,
+                    'Heart when I think about ______',
+                    (info_box_origin[0] + 10, info_box_origin[1] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.6,
+                    (0, 0, 0),
+                    2)
+    return frame
+
+
+def main():
+    global skull_toggle, liver_toggle, heart_toggle
+
+    skull_toggle = False
+    liver_toggle = False
+    heart_toggle = False
+
+    skull_image = load_image('images/skull_image.png')
+    liver_image = load_image('images/liver_image.png')
+    heart_image = load_image('images/heart_image.png')
+    cap = cv2.VideoCapture(0)
+
+    root = tk.Tk()
+    root.geometry("1280x720")
+
+    panel = tk.Label(root)
+    panel.pack(padx=10, pady=10)
+
+    btn_skull = tk.Button(root, text="Toggle Skull Overlay", command=toggle_skull)
+    btn_skull.pack(fill="both", expand=True, padx=10, pady=10)
+
+    btn_liver = tk.Button(root, text="Toggle Liver Overlay", command=toggle_liver)
+    btn_liver.pack(fill="both", expand=True, padx=10, pady=10)
+
+    btn_heart = tk.Button(root, text="Toggle Heart Overlay", command=toggle_heart)
+    btn_heart.pack(fill="both", expand=True, padx=10, pady=10)
+
+    def video_loop():
+        ret, frame = cap.read()
+        if not ret:
+            return
+        landmarks = get_landmarks(frame, pose)
+        if liver_toggle:
+            frame = overlay_liver_image(frame, liver_image, (0, 0), landmarks)
+        if heart_toggle:
+            frame = overlay_heart_image(frame, heart_image, landmarks)
+        if skull_toggle:
+            frame = overlay_skull_image(frame, skull_image, landmarks)
+        mp_drawing.draw_landmarks(frame, landmarks, mp_pose.POSE_CONNECTIONS)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        img = Image.fromarray(frame)
+        imgtk = ImageTk.PhotoImage(image=img)
+
+        panel.imgtk = imgtk
+        panel.configure(image=imgtk)
+        root.after(10, video_loop)
+
+    video_loop()
+    root.mainloop()
+
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    main()
