@@ -137,7 +137,7 @@ def overlay_skull_image(frame, overlay_img, landmarks):
             frame[skull_y:skull_y + skull_height, skull_x:skull_x + skull_width] = overlay
             info_box_origin = (skull_x - 100, skull_y + 290)
 
-            info_text = skull_info
+            info_text = str(skull_info)
 
             if skull_info_toggle:
                 cv2.rectangle(frame,
@@ -183,7 +183,7 @@ def overlay_liver_image(frame, overlay_img, location, landmarks):
             overlay = np.uint8(overlay)
             frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width] = overlay
             info_box_origin = (liver_x - 80, liver_y - 20)  # Placing the info box above the heart
-            info_text = liver_info
+            info_text = str(liver_info)
             info_text_line1 = 'The liver is essential for digesting food and'
             info_text_line2 = 'ridding your body of toxic substances.'
             info_text_line3 = 'Liver disease can be inherited (genetic).'
@@ -294,7 +294,7 @@ def overlay_heart_image(frame, overlay_img, landmarks):
         overlay = np.uint8(overlay)
 
         frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width] = overlay
-        info_text = """"""
+        info_text = str(heart_info)
         # Create a rectangle for the pop up and add some text
         info_box_origin = (heart_x_cache - 140, heart_y_cache - 20)  # Placing the info box above the heart
         if heart_info_toggle:
@@ -348,7 +348,7 @@ def main():
     btn_skull.pack(fill="both", expand=True, padx=10, pady=10)
 
     btn_skull_info = tk.Button(frame_right, text="Toggle Skull Info", command=toggle_skull_info)
-    btn_skull_info.pack(fill="both", expand=True, padx=10, pady=5)
+    btn_skull_info.pack(fill="both", expand=True, padx=10, pady=0)
     btn_skull_edit = tk.Button(frame_right, text="Edit Skull Info", command=edit_skull_info)
     btn_skull_edit.pack(fill="both", expand=True, padx=10, pady=5)
 
@@ -356,7 +356,7 @@ def main():
     btn_liver.pack(fill="both", expand=True, padx=10, pady=10)
 
     btn_liver_info = tk.Button(frame_right, text="Toggle Liver Info", command=toggle_liver_info)
-    btn_liver_info.pack(fill="both", expand=True, padx=10, pady=5)
+    btn_liver_info.pack(fill="both", expand=True, padx=10, pady=0)
     btn_liver_edit = tk.Button(frame_right, text="Edit Liver Info", command=edit_liver_info)
     btn_liver_edit.pack(fill="both", expand=True, padx=10, pady=5)
 
@@ -364,7 +364,7 @@ def main():
     btn_heart.pack(fill="both", expand=True, padx=10, pady=10)
 
     btn_heart_info = tk.Button(frame_right, text="Toggle Heart Info", command=toggle_heart_info)
-    btn_heart_info.pack(fill="both", expand=True, padx=10, pady=5)
+    btn_heart_info.pack(fill="both", expand=True, padx=10, pady=0)
     btn_heart_edit = tk.Button(frame_right, text="Edit Heart Info", command=edit_heart_info)
     btn_heart_edit.pack(fill="both", expand=True, padx=10, pady=5)
     def video_loop():
