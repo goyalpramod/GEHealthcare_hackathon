@@ -331,42 +331,45 @@ def main():
     torso_image = load_image('images/torso.png')
     cap = cv2.VideoCapture(0)
 
+    ret, frame = cap.read()
+    if not ret:
+        print("Failed to open the webcam.")
+        exit(1)
+
     root = tk.Tk()
-    root.geometry("1280x720")
+    height, width, _ = frame.shape
+    root.geometry(f"{width+40}x{height + 500}")
+    root.title("AR Organ Projection")
+    # root.geometry("1280x720")
+    root.configure(background="light grey")
 
     panel = tk.Label(root)
-    panel.pack(padx=10, pady=10)
+    panel.grid(row=0, column=0, columnspan=3, padx=10, pady=10)
 
+    main_frame = tk.Frame(root, bg="light grey")
+    main_frame.grid(row=1, column=0, columnspan=3, padx=20, pady=20)
 
-    frame_left = tk.Frame(root)
-    frame_left.pack(side="left", fill="both", expand=True)
+    def create_organ_frame(parent, organ_name, toggle_command, toggle_info_command, edit_info_command):
+        frame = tk.LabelFrame(parent, text=organ_name, font=("Helvetica", 20), bg="white", bd=5)
 
-    frame_right = tk.Frame(root)
-    frame_right.pack(side="right", fill="both", expand=True)
+        tk.Button(frame, text=f"Toggle {organ_name} Overlay", command=toggle_command, height=2, width=20,
+                  bg="light green").pack(side="top", padx=5, pady=5)
+        tk.Button(frame, text=f"Toggle {organ_name} Info", command=toggle_info_command, height=2, width=20,
+                  bg="light blue").pack(side="top", padx=5, pady=5)
+        tk.Button(frame, text=f"Edit {organ_name} Info", command=edit_info_command, height=2, width=20,
+                  bg="light yellow").pack(side="top", padx=5, pady=5)
 
-    btn_skull = tk.Button(frame_left, text="Toggle Skull Overlay", command=toggle_skull)
-    btn_skull.pack(fill="both", expand=True, padx=10, pady=10)
+        return frame
 
-    btn_skull_info = tk.Button(frame_right, text="Toggle Skull Info", command=toggle_skull_info)
-    btn_skull_info.pack(fill="both", expand=True, padx=10, pady=0)
-    btn_skull_edit = tk.Button(frame_right, text="Edit Skull Info", command=edit_skull_info)
-    btn_skull_edit.pack(fill="both", expand=True, padx=10, pady=5)
+    skull_frame = create_organ_frame(main_frame, 'Skull', toggle_skull, toggle_skull_info, edit_skull_info)
+    skull_frame.grid(row=0, column=0, padx=15)
 
-    btn_liver = tk.Button(frame_left, text="Toggle Liver Overlay", command=toggle_liver)
-    btn_liver.pack(fill="both", expand=True, padx=10, pady=10)
+    liver_frame = create_organ_frame(main_frame, 'Liver', toggle_liver, toggle_liver_info, edit_liver_info)
+    liver_frame.grid(row=0, column=1, padx=15)
 
-    btn_liver_info = tk.Button(frame_right, text="Toggle Liver Info", command=toggle_liver_info)
-    btn_liver_info.pack(fill="both", expand=True, padx=10, pady=0)
-    btn_liver_edit = tk.Button(frame_right, text="Edit Liver Info", command=edit_liver_info)
-    btn_liver_edit.pack(fill="both", expand=True, padx=10, pady=5)
+    heart_frame = create_organ_frame(main_frame, 'Heart', toggle_heart, toggle_heart_info, edit_heart_info)
+    heart_frame.grid(row=0, column=2, padx=15)
 
-    btn_heart = tk.Button(frame_left, text="Toggle Heart Overlay", command=toggle_heart)
-    btn_heart.pack(fill="both", expand=True, padx=10, pady=10)
-
-    btn_heart_info = tk.Button(frame_right, text="Toggle Heart Info", command=toggle_heart_info)
-    btn_heart_info.pack(fill="both", expand=True, padx=10, pady=0)
-    btn_heart_edit = tk.Button(frame_right, text="Edit Heart Info", command=edit_heart_info)
-    btn_heart_edit.pack(fill="both", expand=True, padx=10, pady=5)
     def video_loop():
         ret, frame = cap.read()
         if not ret:
