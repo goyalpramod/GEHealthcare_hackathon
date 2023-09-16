@@ -4,13 +4,18 @@ import numpy as np
 import math
 import time
 import tkinter as tk
-
 from PIL import ImageTk, Image
 
-skull_toggle = True
-liver_toggle = True
-heart_toggle = True
-info_toggle = True
+mp_drawing = mp.solutions.drawing_utils
+mp_pose = mp.solutions.pose
+pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+
+skull_toggle = False
+skull_info_toggle = False
+liver_toggle = False
+liver_info_toggle = False
+heart_toggle = False
+heart_info_toggle = False
 
 
 def toggle_skull():
@@ -28,15 +33,19 @@ def toggle_heart():
     heart_toggle = not heart_toggle
 
 
-def toggle_info_popup():
-    global info_toggle
-    info_toggle = not info_toggle
+def toggle_skull_info():
+    global skull_info_toggle
+    skull_info_toggle = not skull_info_toggle
 
 
-mp_drawing = mp.solutions.drawing_utils
-mp_pose = mp.solutions.pose
+def toggle_liver_info():
+    global liver_info_toggle
+    liver_info_toggle = not liver_info_toggle
 
-pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+
+def toggle_heart_info():
+    global heart_info_toggle
+    heart_info_toggle = not heart_info_toggle
 
 
 def load_image(image_path):
@@ -105,23 +114,21 @@ def overlay_skull_image(frame, overlay_img, landmarks):
 
             info_text = "The skull is a bone protective cavity for the brain.[1] The skull is composed of four types of bone i.e., cranial bones, facial bones, ear ossicles and hyoid bone"
 
-
-            cv2.rectangle(frame,
-                          info_box_origin,
-                          (info_box_origin[0] + 480, info_box_origin[1] - 80),
-                          (255, 225, 255),
-                          cv2.FILLED)
-            step = 45
-            for i in range(0, len(info_text), step):
-
-                cv2.putText(frame,
-                            info_text[i:i+step] if len(info_text)-i>step else info_text[i:],
-                            (info_box_origin[0] + 10, info_box_origin[1] - 65+int(i/step*20)),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            (0, 0, 0),
-                            2)
-
+            if skull_info_toggle:
+                cv2.rectangle(frame,
+                              info_box_origin,
+                              (info_box_origin[0] + 480, info_box_origin[1] - 80),
+                              (255, 225, 255),
+                              cv2.FILLED)
+                step = 45
+                for i in range(0, len(info_text), step):
+                    cv2.putText(frame,
+                                info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
+                                (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.6,
+                                (0, 0, 0),
+                                1)
 
         return frame
 
@@ -132,7 +139,7 @@ def overlay_liver_image(frame, overlay_img, location, landmarks):
         right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
         if right_hip.visibility > 0.1:
             overlay_x, overlay_y = location
-            liver_x = int((right_shoulder.x + (3 / 5) * (right_hip.x - right_shoulder.x)) * frame.shape[1]) -15
+            liver_x = int((right_shoulder.x + (3 / 5) * (right_hip.x - right_shoulder.x)) * frame.shape[1]) - 15
             liver_y = int((right_shoulder.y + (3 / 5) * (right_hip.y - right_shoulder.y)) * frame.shape[0]) - 60
             dist_shoulder_hip = np.sqrt((right_hip.x - right_shoulder.x) ** 2 + (right_hip.y - right_shoulder.y) ** 2)
             liver_width = int(frame.shape[1] * dist_shoulder_hip * 0.4)
@@ -155,36 +162,36 @@ def overlay_liver_image(frame, overlay_img, location, landmarks):
             info_text_line1 = 'The liver is essential for digesting food and'
             info_text_line2 = 'ridding your body of toxic substances.'
             info_text_line3 = 'Liver disease can be inherited (genetic).'
+            if liver_info_toggle:
+                cv2.rectangle(frame,
+                              info_box_origin,
+                              (info_box_origin[0] + 430, info_box_origin[1] - 80),
+                              (255, 225, 255),
+                              cv2.FILLED)
 
-            cv2.rectangle(frame,
-                          info_box_origin,
-                          (info_box_origin[0] + 430, info_box_origin[1] -80),
-                          (255, 225, 255),
-                          cv2.FILLED)
+                cv2.putText(frame,
+                            info_text_line1,
+                            (info_box_origin[0] + 10, info_box_origin[1] - 50),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            (0, 0, 0),
+                            1)
 
-            cv2.putText(frame,
-                        info_text_line1,
-                        (info_box_origin[0] + 10, info_box_origin[1] - 50),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.6,
-                        (0, 0, 0),
-                        2)
+                cv2.putText(frame,
+                            info_text_line2,
+                            (info_box_origin[0] + 10, info_box_origin[1] - 30),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            (0, 0, 0),
+                            1)
 
-            cv2.putText(frame,
-                        info_text_line2,
-                        (info_box_origin[0] + 10, info_box_origin[1] - 30),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.6,
-                        (0, 0, 0),
-                        2)
-
-            cv2.putText(frame,
-                        info_text_line3,
-                        (info_box_origin[0] + 10, info_box_origin[1] -10),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.6,
-                        (0, 0, 0),
-                        2)
+                cv2.putText(frame,
+                            info_text_line3,
+                            (info_box_origin[0] + 10, info_box_origin[1] - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            (0, 0, 0),
+                            1)
     return frame
 
 
@@ -214,8 +221,8 @@ def overlay_left_arm_image(frame, overlay_img, landmarks):
             overlay = np.uint8(overlay)
             frame[arm_y:arm_y + arm_height, arm_x:arm_x + arm_width] = overlay
 
-
     return frame
+
 
 def overlay_torso_image(frame, overlay_img, landmarks):
     if landmarks:
@@ -224,7 +231,7 @@ def overlay_torso_image(frame, overlay_img, landmarks):
         left_hip = landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP]
         right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
         if all(landmark.visibility > 0.5 for landmark in [left_shoulder, right_shoulder, left_hip, right_hip]):
-            x = min(left_shoulder.x, left_hip.x) * frame.shape[1]-80
+            x = min(left_shoulder.x, left_hip.x) * frame.shape[1] - 80
             y = min(left_shoulder.y, right_shoulder.y) * frame.shape[0]
             width = max(right_shoulder.x, right_hip.x) * frame.shape[1] - x
             height = max(left_hip.y, right_hip.y) * frame.shape[0] - y
@@ -237,20 +244,21 @@ def overlay_torso_image(frame, overlay_img, landmarks):
             mask = mask / 255.0
             r, g, b, a = overlay_channels
             overlay_channels_rgb = cv2.merge([r, g, b])
-            torso_portion = frame[y:y+height, x:x+width]
+            torso_portion = frame[y:y + height, x:x + width]
             overlay = overlay_channels_rgb * mask + torso_portion * (1 - mask)
             overlay = np.uint8(overlay)
-            frame[y:y+height, x:x+width] = overlay
+            frame[y:y + height, x:x + width] = overlay
     return frame
+
 
 def overlay_heart_image(frame, overlay_img, landmarks):
     if landmarks:
         left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
         right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
-        current_time=time.time()
+        current_time = time.time()
         scale_factor = 1 + 0.05 * math.sin(15 * current_time)
-        heart_x = int((left_shoulder.x + (1 / 2) * (right_shoulder.x - left_shoulder.x)) * frame.shape[1]) - 30
-        heart_y = int((left_shoulder.y + (1 / 2) * (right_shoulder.y - left_shoulder.y)) * frame.shape[0]) + 30
+        heart_x_cache = int((left_shoulder.x + (1 / 2) * (right_shoulder.x - left_shoulder.x)) * frame.shape[1]) - 30
+        heart_y_cache = int((left_shoulder.y + (1 / 2) * (right_shoulder.y - left_shoulder.y)) * frame.shape[0]) + 30
 
         dist_shoulder = np.sqrt((right_shoulder.x - left_shoulder.x) ** 2 + (right_shoulder.y - left_shoulder.y) ** 2)
         heart_width = int(scale_factor * frame.shape[1] * dist_shoulder * 0.6)
@@ -259,8 +267,8 @@ def overlay_heart_image(frame, overlay_img, landmarks):
 
         heart_image_resized = cv2.resize(overlay_img, (heart_width, heart_height), interpolation=cv2.INTER_AREA)
 
-        heart_y = min(max(heart_y, 0), frame.shape[0] - heart_height)
-        heart_x = min(max(heart_x, 0), frame.shape[1] - heart_width)
+        heart_y = min(max(heart_y_cache, 0), frame.shape[0] - heart_height)
+        heart_x = min(max(heart_x_cache, 0), frame.shape[1] - heart_width)
 
         heart_channels = cv2.split(heart_image_resized)
 
@@ -275,22 +283,27 @@ def overlay_heart_image(frame, overlay_img, landmarks):
         overlay = np.uint8(overlay)
 
         frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width] = overlay
-
+        info_text = """The Heart pumps blood through the blood vessels of the circulatory system. The pumped blood carries oxygen and nutrients to the body, while carrying metabolic waste such as carbon dioxide to the lungs."""
         # Create a rectangle for the pop up and add some text
-        info_box_origin = (heart_x-80, heart_y - 20)  # Placing the info box above the heart
-        cv2.rectangle(frame,
-                      info_box_origin,
-                      (info_box_origin[0] + 340, info_box_origin[1] - 40),
-                      (255, 225, 255),
-                      cv2.FILLED)
-        cv2.putText(frame,
-                    'Heart when I think about ______',
-                    (info_box_origin[0] + 10, info_box_origin[1] - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.6,
-                    (0, 0, 0),
-                    2)
-    return frame
+        info_box_origin = (heart_x_cache - 140, heart_y_cache - 20)  # Placing the info box above the heart
+        if heart_info_toggle:
+            cv2.rectangle(frame,
+                          info_box_origin,
+                          (info_box_origin[0] + 550, info_box_origin[1] - 80),
+                          (255, 225, 255),
+                          cv2.FILLED)
+            step = 50
+            for i in range(0, len(info_text), step):
+                cv2.putText(frame,
+                            info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
+                            (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            (0, 0, 0),
+                            1)
+
+
+        return frame
 
 
 def main():
@@ -313,15 +326,30 @@ def main():
     panel = tk.Label(root)
     panel.pack(padx=10, pady=10)
 
-    btn_skull = tk.Button(root, text="Toggle Skull Overlay", command=toggle_skull)
+
+    frame_left = tk.Frame(root)
+    frame_left.pack(side="left", fill="both", expand=True)
+
+    frame_right = tk.Frame(root)
+    frame_right.pack(side="right", fill="both", expand=True)
+
+    btn_skull = tk.Button(frame_left, text="Toggle Skull Overlay", command=toggle_skull)
     btn_skull.pack(fill="both", expand=True, padx=10, pady=10)
 
-    btn_liver = tk.Button(root, text="Toggle Liver Overlay", command=toggle_liver)
+    btn_skull_info = tk.Button(frame_right, text="Toggle Skull Info", command=toggle_skull_info)
+    btn_skull_info.pack(fill="both", expand=True, padx=10, pady=10)
+
+    btn_liver = tk.Button(frame_left, text="Toggle Liver Overlay", command=toggle_liver)
     btn_liver.pack(fill="both", expand=True, padx=10, pady=10)
 
-    btn_heart = tk.Button(root, text="Toggle Heart Overlay", command=toggle_heart)
+    btn_liver_info = tk.Button(frame_right, text="Toggle Liver Info", command=toggle_liver_info)
+    btn_liver_info.pack(fill="both", expand=True, padx=10, pady=10)
+
+    btn_heart = tk.Button(frame_left, text="Toggle Heart Overlay", command=toggle_heart)
     btn_heart.pack(fill="both", expand=True, padx=10, pady=10)
 
+    btn_heart_info = tk.Button(frame_right, text="Toggle Heart Info", command=toggle_heart_info)
+    btn_heart_info.pack(fill="both", expand=True, padx=10, pady=10)
     def video_loop():
         ret, frame = cap.read()
         if not ret:
