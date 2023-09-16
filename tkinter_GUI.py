@@ -52,26 +52,29 @@ def toggle_heart_info():
     heart_info_toggle = not heart_info_toggle
 
 
-
 def edit_skull_info():
     global skull_info
-    skull_info = simpledialog.askstring("Edit Skull Info", "Enter new information for the skull:", initialvalue=skull_info)
+    skull_info = simpledialog.askstring("Edit Skull Info", "Enter new information for the skull:",
+                                        initialvalue=skull_info)
     if skull_info is None:  # Restore if canceled
         skull_info = ...
 
 
 def edit_liver_info():
     global liver_info
-    liver_info = simpledialog.askstring("Edit Liver Info", "Enter new information for the liver:", initialvalue=liver_info)
+    liver_info = simpledialog.askstring("Edit Liver Info", "Enter new information for the liver:",
+                                        initialvalue=liver_info)
     if liver_info is None:  # Restore if canceled
         liver_info = ...
 
 
 def edit_heart_info():
     global heart_info
-    heart_info = simpledialog.askstring("Edit Heart Info", "Enter new information for the heart:", initialvalue=heart_info)
+    heart_info = simpledialog.askstring("Edit Heart Info", "Enter new information for the heart:",
+                                        initialvalue=heart_info)
     if heart_info is None:  # Restore if canceled
         heart_info = ...
+
 
 def load_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
@@ -313,8 +316,54 @@ def overlay_heart_image(frame, overlay_img, landmarks):
                             (0, 0, 0),
                             1)
 
-
         return frame
+
+
+def overlay_respiratory_image(frame, overlay_img, landmarks):
+    if landmarks:
+        left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
+        right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+        left_hip = landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP]
+        right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
+
+        # Assume that the lungs are located in the middle of these four points
+        respiratory_y_cache = int((left_shoulder.y + right_shoulder.y + left_hip.y + right_hip.y) / 4 * frame.shape[0])
+        respiratory_x_cache = int((left_shoulder.x + right_shoulder.x + left_hip.x + right_hip.x) / 4 * frame.shape[1])
+
+        # Calculate width and height similar to other overlay_ functions here
+        dist_shoulder = np.sqrt((right_shoulder.x - left_shoulder.x) ** 2 +
+                                (right_shoulder.y - left_shoulder.y) ** 2)
+        respiratory_width = int(frame.shape[1] * dist_shoulder*1.2)
+        aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
+        respiratory_height = int(respiratory_width / aspect_ratio)
+
+        respiratory_image_resized = cv2.resize(overlay_img, (respiratory_width, respiratory_height),
+                                               interpolation=cv2.INTER_AREA)
+        respiratory_y = min(max(respiratory_y_cache, 0), frame.shape[0] - respiratory_height)-120
+        respiratory_x = min(max(respiratory_x_cache, 0), frame.shape[1] - respiratory_width)-60
+        # Similar to other overlay_ functions here, blend the resized respiratory image with the frame
+        respiratory_channels = cv2.split(respiratory_image_resized)
+        mask = cv2.cvtColor(respiratory_channels[3], cv2.COLOR_GRAY2BGR)
+        mask = mask / 255.0
+
+        r, g, b, a = respiratory_channels
+        respiratory_channels_rgb = cv2.merge([r, g, b])
+        # respiratory_portion = frame[respiratory_y:respiratory_y + respiratory_height,
+        #                       respiratory_x:respiratory_x + respiratory_width]
+
+        # # overlay = respiratory_channels_rgb * mask + respiratory_portion * (1 - mask)
+        # respiratory_y = min(max(respiratory_y, 0), frame.shape[0] - respiratory_height)
+        # respiratory_x = min(max(respiratory_x, 0), frame.shape[1] - respiratory_width)
+
+        respiratory_portion = frame[respiratory_y:respiratory_y + respiratory_height,
+                              respiratory_x:respiratory_x + respiratory_width]
+
+        overlay = respiratory_channels_rgb * mask + respiratory_portion * (1 - mask)
+        overlay = np.uint8(overlay)
+        frame[respiratory_y:respiratory_y + respiratory_height,
+        respiratory_x:respiratory_x + respiratory_width] = overlay
+
+    return frame
 
 
 def main():
@@ -327,6 +376,7 @@ def main():
     skull_image = load_image('images/skull_image.png')
     liver_image = load_image('images/liver_image.png')
     heart_image = load_image('images/heart_image.png')
+    respiratory_image = load_image('images/respiratory_image.png')
     left_arm_image = load_image('images/left_arm.png')
     torso_image = load_image('images/torso.png')
     cap = cv2.VideoCapture(0)
@@ -338,7 +388,7 @@ def main():
 
     root = tk.Tk()
     height, width, _ = frame.shape
-    root.geometry(f"{width+40}x{height + 500}")
+    root.geometry(f"{width + 40}x{height + 500}")
     root.title("AR Organ Projection")
     # root.geometry("1280x720")
     root.configure(background="light grey")
@@ -378,6 +428,7 @@ def main():
         landmarks = get_landmarks(frame, pose)
         # frame = overlay_left_arm_image(frame, left_arm_image, landmarks)
         # frame = overlay_torso_image(frame, torso_image, landmarks)
+        # frame = overlay_respiratory_image(frame, respiratory_image, landmarks)
         if liver_toggle:
             frame = overlay_liver_image(frame, liver_image, (0, 0), landmarks)
         if heart_toggle:
