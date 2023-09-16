@@ -101,6 +101,28 @@ def overlay_skull_image(frame, overlay_img, landmarks):
             overlay = np.uint8(overlay)
 
             frame[skull_y:skull_y + skull_height, skull_x:skull_x + skull_width] = overlay
+            info_box_origin = (skull_x - 100, skull_y + 290)
+
+            info_text = "The skull is a bone protective cavity for the brain.[1] The skull is composed of four types of bone i.e., cranial bones, facial bones, ear ossicles and hyoid bone"
+
+
+            cv2.rectangle(frame,
+                          info_box_origin,
+                          (info_box_origin[0] + 480, info_box_origin[1] - 80),
+                          (255, 225, 255),
+                          cv2.FILLED)
+            step = 45
+            for i in range(0, len(info_text), step):
+
+                cv2.putText(frame,
+                            info_text[i:i+step] if len(info_text)-i>step else info_text[i:],
+                            (info_box_origin[0] + 10, info_box_origin[1] - 65+int(i/step*20)),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            (0, 0, 0),
+                            2)
+
+
         return frame
 
 
@@ -110,8 +132,8 @@ def overlay_liver_image(frame, overlay_img, location, landmarks):
         right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
         if right_hip.visibility > 0.1:
             overlay_x, overlay_y = location
-            liver_x = int((right_shoulder.x + (3 / 5) * (right_hip.x - right_shoulder.x)) * frame.shape[1]) - 40
-            liver_y = int((right_shoulder.y + (3 / 5) * (right_hip.y - right_shoulder.y)) * frame.shape[0])
+            liver_x = int((right_shoulder.x + (3 / 5) * (right_hip.x - right_shoulder.x)) * frame.shape[1]) -15
+            liver_y = int((right_shoulder.y + (3 / 5) * (right_hip.y - right_shoulder.y)) * frame.shape[0]) - 60
             dist_shoulder_hip = np.sqrt((right_hip.x - right_shoulder.x) ** 2 + (right_hip.y - right_shoulder.y) ** 2)
             liver_width = int(frame.shape[1] * dist_shoulder_hip * 0.4)
             aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
@@ -128,8 +150,98 @@ def overlay_liver_image(frame, overlay_img, location, landmarks):
             overlay = liver_channels_rgb * mask + liver_portion * (1 - mask)
             overlay = np.uint8(overlay)
             frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width] = overlay
+            info_box_origin = (liver_x - 80, liver_y - 20)  # Placing the info box above the heart
+            info_text = 'The liver is essential for digesting food and ridding your body of toxic substances. Liver disease can be inherited (genetic).'
+            info_text_line1 = 'The liver is essential for digesting food and'
+            info_text_line2 = 'ridding your body of toxic substances.'
+            info_text_line3 = 'Liver disease can be inherited (genetic).'
+
+            cv2.rectangle(frame,
+                          info_box_origin,
+                          (info_box_origin[0] + 430, info_box_origin[1] -80),
+                          (255, 225, 255),
+                          cv2.FILLED)
+
+            cv2.putText(frame,
+                        info_text_line1,
+                        (info_box_origin[0] + 10, info_box_origin[1] - 50),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        (0, 0, 0),
+                        2)
+
+            cv2.putText(frame,
+                        info_text_line2,
+                        (info_box_origin[0] + 10, info_box_origin[1] - 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        (0, 0, 0),
+                        2)
+
+            cv2.putText(frame,
+                        info_text_line3,
+                        (info_box_origin[0] + 10, info_box_origin[1] -10),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        (0, 0, 0),
+                        2)
     return frame
 
+
+def overlay_left_arm_image(frame, overlay_img, landmarks):
+    if landmarks:
+        left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
+        left_wrist = landmarks.landmark[mp_pose.PoseLandmark.LEFT_WRIST]
+        if left_shoulder.visibility > 0.5 and left_wrist.visibility > 0.5:
+            dist_shoulder_wrist = np.sqrt(
+                (left_wrist.x - left_shoulder.x) ** 2 + (left_wrist.y - left_shoulder.y) ** 2
+            )
+            arm_width = int(frame.shape[1] * dist_shoulder_wrist * 0.75)
+            aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
+            arm_height = int(arm_width / aspect_ratio)
+            arm_x = int((left_shoulder.x + left_wrist.x) / 2 * frame.shape[1])
+            arm_y = int((left_shoulder.y + left_wrist.y) / 2 * frame.shape[0])
+            arm_image_resized = cv2.resize(overlay_img, (arm_width, arm_height), interpolation=cv2.INTER_AREA)
+            arm_y = min(max(arm_y - arm_height // 2, 0), frame.shape[0] - arm_height)
+            arm_x = min(max(arm_x - arm_width // 2, 0), frame.shape[1] - arm_width)
+            arm_channels = cv2.split(arm_image_resized)
+            mask = cv2.cvtColor(arm_channels[3], cv2.COLOR_GRAY2BGR)
+            mask = mask / 255.0
+            r, g, b, a = arm_channels
+            arm_channels_rgb = cv2.merge([r, g, b])
+            arm_portion = frame[arm_y:arm_y + arm_height, arm_x:arm_x + arm_width]
+            overlay = arm_channels_rgb * mask + arm_portion * (1 - mask)
+            overlay = np.uint8(overlay)
+            frame[arm_y:arm_y + arm_height, arm_x:arm_x + arm_width] = overlay
+
+
+    return frame
+
+def overlay_torso_image(frame, overlay_img, landmarks):
+    if landmarks:
+        left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
+        right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+        left_hip = landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP]
+        right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
+        if all(landmark.visibility > 0.5 for landmark in [left_shoulder, right_shoulder, left_hip, right_hip]):
+            x = min(left_shoulder.x, left_hip.x) * frame.shape[1]-80
+            y = min(left_shoulder.y, right_shoulder.y) * frame.shape[0]
+            width = max(right_shoulder.x, right_hip.x) * frame.shape[1] - x
+            height = max(left_hip.y, right_hip.y) * frame.shape[0] - y
+            # Convert all to int
+            x, y, width, height = int(x), int(y), abs(int(width)), abs(int(height))
+
+            overlay_img_resized = cv2.resize(overlay_img, (width, height), interpolation=cv2.INTER_AREA)
+            overlay_channels = cv2.split(overlay_img_resized)
+            mask = cv2.cvtColor(overlay_channels[3], cv2.COLOR_GRAY2BGR)
+            mask = mask / 255.0
+            r, g, b, a = overlay_channels
+            overlay_channels_rgb = cv2.merge([r, g, b])
+            torso_portion = frame[y:y+height, x:x+width]
+            overlay = overlay_channels_rgb * mask + torso_portion * (1 - mask)
+            overlay = np.uint8(overlay)
+            frame[y:y+height, x:x+width] = overlay
+    return frame
 
 def overlay_heart_image(frame, overlay_img, landmarks):
     if landmarks:
@@ -191,6 +303,8 @@ def main():
     skull_image = load_image('images/skull_image.png')
     liver_image = load_image('images/liver_image.png')
     heart_image = load_image('images/heart_image.png')
+    left_arm_image = load_image('images/left_arm.png')
+    torso_image = load_image('images/torso.png')
     cap = cv2.VideoCapture(0)
 
     root = tk.Tk()
@@ -212,7 +326,10 @@ def main():
         ret, frame = cap.read()
         if not ret:
             return
+        # print(frame.shape)
         landmarks = get_landmarks(frame, pose)
+        # frame = overlay_left_arm_image(frame, left_arm_image, landmarks)
+        # frame = overlay_torso_image(frame, torso_image, landmarks)
         if liver_toggle:
             frame = overlay_liver_image(frame, liver_image, (0, 0), landmarks)
         if heart_toggle:
