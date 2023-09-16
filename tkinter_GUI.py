@@ -17,10 +17,12 @@ liver_toggle = False
 liver_info_toggle = False
 heart_toggle = False
 heart_info_toggle = False
+respiratory_toggle = False
+respiratory_info_toggle = False
 skull_info = """The skull is a bone protective cavity for the brain.[1] The skull is composed of four types of bone i.e., cranial bones, facial bones, ear ossicles and hyoid bone"""
 liver_info = """The liver is essential for digesting food and ridding your body of toxic substances. Liver disease can be inherited (genetic)."""
 heart_info = """The Heart pumps blood through the blood vessels of the circulatory system. The pumped blood carries oxygen and nutrients to the body, while carrying metabolic waste such as carbon dioxide to the lungs"""
-
+respiratory_info = """longs"""
 
 def toggle_skull():
     global skull_toggle
@@ -35,6 +37,9 @@ def toggle_liver():
 def toggle_heart():
     global heart_toggle
     heart_toggle = not heart_toggle
+def toggle_respiratory():
+    global respiratory_toggle
+    respiratory_toggle = not respiratory_toggle
 
 
 def toggle_skull_info():
@@ -50,6 +55,9 @@ def toggle_liver_info():
 def toggle_heart_info():
     global heart_info_toggle
     heart_info_toggle = not heart_info_toggle
+def toggle_respiratory_info():
+    global respiratory_info_toggle
+    respiratory_info_toggle = not respiratory_info_toggle
 
 
 def edit_skull_info():
@@ -74,6 +82,12 @@ def edit_heart_info():
                                         initialvalue=heart_info)
     if heart_info is None:  # Restore if canceled
         heart_info = ...
+def edit_respiratory_info():
+    global respiratory_info
+    respiratory_info = simpledialog.askstring("Edit respiratory Info", "Enter new information for the respiratory:",
+                                        initialvalue=respiratory_info)
+    if respiratory_info is None:  # Restore if canceled
+        respiratory_info = ...
 
 
 def load_image(image_path):
@@ -185,7 +199,7 @@ def overlay_liver_image(frame, overlay_img, location, landmarks):
             overlay = liver_channels_rgb * mask + liver_portion * (1 - mask)
             overlay = np.uint8(overlay)
             frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width] = overlay
-            info_box_origin = (liver_x - 80, liver_y - 20)  # Placing the info box above the heart
+            info_box_origin = (liver_x - 80, liver_y - 20)  # Placing the info box above the respiratory
             info_text = str(liver_info)
             info_text_line1 = 'The liver is essential for digesting food and'
             info_text_line2 = 'ridding your body of toxic substances.'
@@ -362,6 +376,23 @@ def overlay_respiratory_image(frame, overlay_img, landmarks):
         overlay = np.uint8(overlay)
         frame[respiratory_y:respiratory_y + respiratory_height,
         respiratory_x:respiratory_x + respiratory_width] = overlay
+        info_text = respiratory_info
+        info_box_origin = (respiratory_x_cache - 40, respiratory_y_cache - 100)
+        if respiratory_info_toggle:
+            cv2.rectangle(frame,
+                          info_box_origin,
+                          (info_box_origin[0] + 550, info_box_origin[1] - 80),
+                          (255, 225, 255),
+                          cv2.FILLED)
+            step = 50
+            for i in range(0, len(info_text), step):
+                cv2.putText(frame,
+                            info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
+                            (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.6,
+                            (0, 0, 0),
+                            1)
 
     return frame
 
@@ -397,7 +428,7 @@ def main():
     panel.grid(row=0, column=0, columnspan=3, padx=10, pady=10)
 
     main_frame = tk.Frame(root, bg="light grey")
-    main_frame.grid(row=1, column=0, columnspan=3, padx=20, pady=20)
+    main_frame.grid(row=1, column=0, columnspan=4, padx=10, pady=10)
 
     def create_organ_frame(parent, organ_name, toggle_command, toggle_info_command, edit_info_command):
         frame = tk.LabelFrame(parent, text=organ_name, font=("Helvetica", 20), bg="white", bd=5)
@@ -420,6 +451,9 @@ def main():
     heart_frame = create_organ_frame(main_frame, 'Heart', toggle_heart, toggle_heart_info, edit_heart_info)
     heart_frame.grid(row=0, column=2, padx=15)
 
+    respiratory_frame = create_organ_frame(main_frame, 'respiratory', toggle_respiratory, toggle_respiratory_info, edit_respiratory_info)
+    respiratory_frame.grid(row=0, column=3, padx=15)
+
     def video_loop():
         ret, frame = cap.read()
         if not ret:
@@ -428,7 +462,8 @@ def main():
         landmarks = get_landmarks(frame, pose)
         # frame = overlay_left_arm_image(frame, left_arm_image, landmarks)
         # frame = overlay_torso_image(frame, torso_image, landmarks)
-        # frame = overlay_respiratory_image(frame, respiratory_image, landmarks)
+        if respiratory_toggle:
+            frame = overlay_respiratory_image(frame, respiratory_image, landmarks)
         if liver_toggle:
             frame = overlay_liver_image(frame, liver_image, (0, 0), landmarks)
         if heart_toggle:
