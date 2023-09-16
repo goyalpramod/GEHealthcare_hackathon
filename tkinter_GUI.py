@@ -5,6 +5,7 @@ import math
 import time
 import tkinter as tk
 from PIL import ImageTk, Image
+import tkinter.simpledialog as simpledialog
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -16,6 +17,9 @@ liver_toggle = False
 liver_info_toggle = False
 heart_toggle = False
 heart_info_toggle = False
+skull_info = """The skull is a bone protective cavity for the brain.[1] The skull is composed of four types of bone i.e., cranial bones, facial bones, ear ossicles and hyoid bone"""
+liver_info = """The liver is essential for digesting food and ridding your body of toxic substances. Liver disease can be inherited (genetic)."""
+heart_info = """The Heart pumps blood through the blood vessels of the circulatory system. The pumped blood carries oxygen and nutrients to the body, while carrying metabolic waste such as carbon dioxide to the lungs"""
 
 
 def toggle_skull():
@@ -47,6 +51,27 @@ def toggle_heart_info():
     global heart_info_toggle
     heart_info_toggle = not heart_info_toggle
 
+
+
+def edit_skull_info():
+    global skull_info
+    skull_info = simpledialog.askstring("Edit Skull Info", "Enter new information for the skull:", initialvalue=skull_info)
+    if skull_info is None:  # Restore if canceled
+        skull_info = ...
+
+
+def edit_liver_info():
+    global liver_info
+    liver_info = simpledialog.askstring("Edit Liver Info", "Enter new information for the liver:", initialvalue=liver_info)
+    if liver_info is None:  # Restore if canceled
+        liver_info = ...
+
+
+def edit_heart_info():
+    global heart_info
+    heart_info = simpledialog.askstring("Edit Heart Info", "Enter new information for the heart:", initialvalue=heart_info)
+    if heart_info is None:  # Restore if canceled
+        heart_info = ...
 
 def load_image(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
@@ -112,7 +137,7 @@ def overlay_skull_image(frame, overlay_img, landmarks):
             frame[skull_y:skull_y + skull_height, skull_x:skull_x + skull_width] = overlay
             info_box_origin = (skull_x - 100, skull_y + 290)
 
-            info_text = "The skull is a bone protective cavity for the brain.[1] The skull is composed of four types of bone i.e., cranial bones, facial bones, ear ossicles and hyoid bone"
+            info_text = skull_info
 
             if skull_info_toggle:
                 cv2.rectangle(frame,
@@ -158,7 +183,7 @@ def overlay_liver_image(frame, overlay_img, location, landmarks):
             overlay = np.uint8(overlay)
             frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width] = overlay
             info_box_origin = (liver_x - 80, liver_y - 20)  # Placing the info box above the heart
-            info_text = 'The liver is essential for digesting food and ridding your body of toxic substances. Liver disease can be inherited (genetic).'
+            info_text = liver_info
             info_text_line1 = 'The liver is essential for digesting food and'
             info_text_line2 = 'ridding your body of toxic substances.'
             info_text_line3 = 'Liver disease can be inherited (genetic).'
@@ -169,29 +194,15 @@ def overlay_liver_image(frame, overlay_img, location, landmarks):
                               (255, 225, 255),
                               cv2.FILLED)
 
-                cv2.putText(frame,
-                            info_text_line1,
-                            (info_box_origin[0] + 10, info_box_origin[1] - 50),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            (0, 0, 0),
-                            1)
-
-                cv2.putText(frame,
-                            info_text_line2,
-                            (info_box_origin[0] + 10, info_box_origin[1] - 30),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            (0, 0, 0),
-                            1)
-
-                cv2.putText(frame,
-                            info_text_line3,
-                            (info_box_origin[0] + 10, info_box_origin[1] - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            (0, 0, 0),
-                            1)
+                step = 50
+                for i in range(0, len(info_text), step):
+                    cv2.putText(frame,
+                                info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
+                                (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.6,
+                                (0, 0, 0),
+                                1)
     return frame
 
 
@@ -283,7 +294,7 @@ def overlay_heart_image(frame, overlay_img, landmarks):
         overlay = np.uint8(overlay)
 
         frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width] = overlay
-        info_text = """The Heart pumps blood through the blood vessels of the circulatory system. The pumped blood carries oxygen and nutrients to the body, while carrying metabolic waste such as carbon dioxide to the lungs."""
+        info_text = """"""
         # Create a rectangle for the pop up and add some text
         info_box_origin = (heart_x_cache - 140, heart_y_cache - 20)  # Placing the info box above the heart
         if heart_info_toggle:
@@ -337,19 +348,25 @@ def main():
     btn_skull.pack(fill="both", expand=True, padx=10, pady=10)
 
     btn_skull_info = tk.Button(frame_right, text="Toggle Skull Info", command=toggle_skull_info)
-    btn_skull_info.pack(fill="both", expand=True, padx=10, pady=10)
+    btn_skull_info.pack(fill="both", expand=True, padx=10, pady=5)
+    btn_skull_edit = tk.Button(frame_right, text="Edit Skull Info", command=edit_skull_info)
+    btn_skull_edit.pack(fill="both", expand=True, padx=10, pady=5)
 
     btn_liver = tk.Button(frame_left, text="Toggle Liver Overlay", command=toggle_liver)
     btn_liver.pack(fill="both", expand=True, padx=10, pady=10)
 
     btn_liver_info = tk.Button(frame_right, text="Toggle Liver Info", command=toggle_liver_info)
-    btn_liver_info.pack(fill="both", expand=True, padx=10, pady=10)
+    btn_liver_info.pack(fill="both", expand=True, padx=10, pady=5)
+    btn_liver_edit = tk.Button(frame_right, text="Edit Liver Info", command=edit_liver_info)
+    btn_liver_edit.pack(fill="both", expand=True, padx=10, pady=5)
 
     btn_heart = tk.Button(frame_left, text="Toggle Heart Overlay", command=toggle_heart)
     btn_heart.pack(fill="both", expand=True, padx=10, pady=10)
 
     btn_heart_info = tk.Button(frame_right, text="Toggle Heart Info", command=toggle_heart_info)
-    btn_heart_info.pack(fill="both", expand=True, padx=10, pady=10)
+    btn_heart_info.pack(fill="both", expand=True, padx=10, pady=5)
+    btn_heart_edit = tk.Button(frame_right, text="Edit Heart Info", command=edit_heart_info)
+    btn_heart_edit.pack(fill="both", expand=True, padx=10, pady=5)
     def video_loop():
         ret, frame = cap.read()
         if not ret:
