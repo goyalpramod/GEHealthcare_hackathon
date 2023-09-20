@@ -108,119 +108,125 @@ def get_landmarks(frame, pose):
 
 
 def overlay_skull_image(frame, overlay_img, landmarks):
-    if landmarks:
-        left_eye = landmarks.landmark[mp_pose.PoseLandmark.LEFT_EYE_INNER]
-        left_ear = landmarks.landmark[mp_pose.PoseLandmark.LEFT_EAR]
-        right_ear = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_EAR]
-        right_mouth = landmarks.landmark[mp_pose.PoseLandmark.MOUTH_RIGHT]
-        print(left_eye.visibility)
-        if (left_ear.visibility > 0.1 and right_ear.visibility > 0.5 and left_eye.visibility > 0.9
-                and right_mouth.visibility > 0.9):
-            # Calculate rotation angle in radians
-            radians = math.atan2(right_ear.y - left_ear.y, right_ear.x - left_ear.x)
+    try:
+        if landmarks:
+            left_eye = landmarks.landmark[mp_pose.PoseLandmark.LEFT_EYE_INNER]
+            left_ear = landmarks.landmark[mp_pose.PoseLandmark.LEFT_EAR]
+            right_ear = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_EAR]
+            right_mouth = landmarks.landmark[mp_pose.PoseLandmark.MOUTH_RIGHT]
+            # print(left_eye.visibility)
+            if (left_ear.visibility > 0.1 and right_ear.visibility > 0.5 and left_eye.visibility > 0.9
+                    and right_mouth.visibility > 0.9):
+                # Calculate rotation angle in radians
+                radians = math.atan2(right_ear.y - left_ear.y, right_ear.x - left_ear.x)
 
-            # Convert to degrees
-            angle = -(math.degrees(radians) + 180) % 360
+                # Convert to degrees
+                angle = -(math.degrees(radians) + 180) % 360
 
-            # Rotate the overlay image
-            m = cv2.getRotationMatrix2D(tuple(np.divide(overlay_img.shape[:2], 2)), angle, 1)
-            overlay_img = cv2.warpAffine(overlay_img, m, overlay_img.shape[:2])
+                # Rotate the overlay image
+                m = cv2.getRotationMatrix2D(tuple(np.divide(overlay_img.shape[:2], 2)), angle, 1)
+                overlay_img = cv2.warpAffine(overlay_img, m, overlay_img.shape[:2])
 
-            skull_x = int((left_ear.x + (1 / 2) * (right_ear.x - left_ear.x)) * frame.shape[1])
-            skull_y = int(max(left_ear.y, right_ear.y) * frame.shape[0])
+                skull_x = int((left_ear.x + (1 / 2) * (right_ear.x - left_ear.x)) * frame.shape[1])
+                skull_y = int(max(left_ear.y, right_ear.y) * frame.shape[0])
 
-            dist_ears = np.sqrt((right_ear.x - left_ear.x) ** 2 + (right_ear.y - left_ear.y) ** 2)
-            skull_width = int(frame.shape[1] * dist_ears * 2.7)
-            aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
-            skull_height = int(skull_width / aspect_ratio)
+                dist_ears = np.sqrt((right_ear.x - left_ear.x) ** 2 + (right_ear.y - left_ear.y) ** 2)
+                skull_width = int(frame.shape[1] * dist_ears * 2.7)
+                aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
+                skull_height = int(skull_width / aspect_ratio)
 
-            skull_image_resized = cv2.resize(overlay_img, (skull_width, skull_height), interpolation=cv2.INTER_AREA)
+                skull_image_resized = cv2.resize(overlay_img, (skull_width, skull_height), interpolation=cv2.INTER_AREA)
 
-            skull_y = min(max(skull_y - skull_height // 2, 0), frame.shape[0] - skull_height)
-            skull_x = min(max(skull_x - skull_width // 2, 0), frame.shape[1] - skull_width)
+                skull_y = min(max(skull_y - skull_height // 2, 0), frame.shape[0] - skull_height)
+                skull_x = min(max(skull_x - skull_width // 2, 0), frame.shape[1] - skull_width)
 
-            skull_channels = cv2.split(skull_image_resized)
+                skull_channels = cv2.split(skull_image_resized)
 
-            mask = cv2.cvtColor(skull_channels[3], cv2.COLOR_GRAY2BGR)
-            mask = mask / 255.0
+                mask = cv2.cvtColor(skull_channels[3], cv2.COLOR_GRAY2BGR)
+                mask = mask / 255.0
 
-            r, g, b, a = skull_channels
-            skull_channels_rgb = cv2.merge([r, g, b])
-            skull_portion = frame[skull_y:skull_y + skull_height, skull_x:skull_x + skull_width]
+                r, g, b, a = skull_channels
+                skull_channels_rgb = cv2.merge([r, g, b])
+                skull_portion = frame[skull_y:skull_y + skull_height, skull_x:skull_x + skull_width]
 
-            overlay = skull_channels_rgb * mask + skull_portion * (1 - mask)
-            overlay = np.uint8(overlay)
+                overlay = skull_channels_rgb * mask + skull_portion * (1 - mask)
+                overlay = np.uint8(overlay)
 
-            frame[skull_y:skull_y + skull_height, skull_x:skull_x + skull_width] = overlay
-            info_box_origin = (skull_x - 100, skull_y + 290)
+                frame[skull_y:skull_y + skull_height, skull_x:skull_x + skull_width] = overlay
+                info_box_origin = (skull_x - 100, skull_y + 290)
 
-            info_text = str(skull_info)
+                info_text = str(skull_info)
 
-            if skull_info_toggle:
-                cv2.rectangle(frame,
-                              info_box_origin,
-                              (info_box_origin[0] + 480, info_box_origin[1] - 80),
-                              (255, 225, 255),
-                              cv2.FILLED)
-                step = 45
-                for i in range(0, len(info_text), step):
-                    cv2.putText(frame,
-                                info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
-                                (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.6,
-                                (0, 0, 0),
-                                1)
+                if skull_info_toggle:
+                    cv2.rectangle(frame,
+                                  info_box_origin,
+                                  (info_box_origin[0] + 480, info_box_origin[1] - 80),
+                                  (255, 225, 255),
+                                  cv2.FILLED)
+                    step = 45
+                    for i in range(0, len(info_text), step):
+                        cv2.putText(frame,
+                                    info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
+                                    (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
+                                    cv2.FONT_HERSHEY_SIMPLEX,
+                                    0.6,
+                                    (0, 0, 0),
+                                    1)
 
-        return frame
+            return frame
+    except:
+        print("reached point skull")
 
 
 def overlay_liver_image(frame, overlay_img, location, landmarks):
-    if landmarks:
-        right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
-        right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
-        if right_hip.visibility > 0.1:
-            overlay_x, overlay_y = location
-            liver_x = int((right_shoulder.x + (3 / 5) * (right_hip.x - right_shoulder.x)) * frame.shape[1]) - 15
-            liver_y = int((right_shoulder.y + (3 / 5) * (right_hip.y - right_shoulder.y)) * frame.shape[0]) - 60
-            dist_shoulder_hip = np.sqrt((right_hip.x - right_shoulder.x) ** 2 + (right_hip.y - right_shoulder.y) ** 2)
-            liver_width = int(frame.shape[1] * dist_shoulder_hip * 0.4)
-            aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
-            liver_height = int(liver_width / aspect_ratio)
-            liver_image_resized = cv2.resize(overlay_img, (liver_width, liver_height), interpolation=cv2.INTER_AREA)
-            liver_y = min(max(liver_y, 0), frame.shape[0] - liver_height)
-            liver_x = min(max(liver_x, 0), frame.shape[1] - liver_width)
-            liver_channels = cv2.split(liver_image_resized)
-            mask = cv2.cvtColor(liver_channels[3], cv2.COLOR_GRAY2BGR)
-            mask = mask / 255.0
-            r, g, b, a = liver_channels
-            liver_channels_rgb = cv2.merge([r, g, b])
-            liver_portion = frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width]
-            overlay = liver_channels_rgb * mask + liver_portion * (1 - mask)
-            overlay = np.uint8(overlay)
-            frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width] = overlay
-            info_box_origin = (liver_x - 80, liver_y - 20)  # Placing the info box above the respiratory
-            info_text = str(liver_info)
-            info_text_line1 = 'The liver is essential for digesting food and'
-            info_text_line2 = 'ridding your body of toxic substances.'
-            info_text_line3 = 'Liver disease can be inherited (genetic).'
-            if liver_info_toggle:
-                cv2.rectangle(frame,
-                              info_box_origin,
-                              (info_box_origin[0] + 430, info_box_origin[1] - 80),
-                              (255, 225, 255),
-                              cv2.FILLED)
+    try:
+        if landmarks:
+            right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+            right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
+            if right_hip.visibility > 0.1:
+                overlay_x, overlay_y = location
+                liver_x = int((right_shoulder.x + (3 / 5) * (right_hip.x - right_shoulder.x)) * frame.shape[1]) - 15
+                liver_y = int((right_shoulder.y + (3 / 5) * (right_hip.y - right_shoulder.y)) * frame.shape[0]) - 60
+                dist_shoulder_hip = np.sqrt((right_hip.x - right_shoulder.x) ** 2 + (right_hip.y - right_shoulder.y) ** 2)
+                liver_width = int(frame.shape[1] * dist_shoulder_hip * 0.4)
+                aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
+                liver_height = int(liver_width / aspect_ratio)
+                liver_image_resized = cv2.resize(overlay_img, (liver_width, liver_height), interpolation=cv2.INTER_AREA)
+                liver_y = min(max(liver_y, 0), frame.shape[0] - liver_height)
+                liver_x = min(max(liver_x, 0), frame.shape[1] - liver_width)
+                liver_channels = cv2.split(liver_image_resized)
+                mask = cv2.cvtColor(liver_channels[3], cv2.COLOR_GRAY2BGR)
+                mask = mask / 255.0
+                r, g, b, a = liver_channels
+                liver_channels_rgb = cv2.merge([r, g, b])
+                liver_portion = frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width]
+                overlay = liver_channels_rgb * mask + liver_portion * (1 - mask)
+                overlay = np.uint8(overlay)
+                frame[liver_y:liver_y + liver_height, liver_x:liver_x + liver_width] = overlay
+                info_box_origin = (liver_x - 80, liver_y - 20)  # Placing the info box above the respiratory
+                info_text = str(liver_info)
+                info_text_line1 = 'The liver is essential for digesting food and'
+                info_text_line2 = 'ridding your body of toxic substances.'
+                info_text_line3 = 'Liver disease can be inherited (genetic).'
+                if liver_info_toggle:
+                    cv2.rectangle(frame,
+                                  info_box_origin,
+                                  (info_box_origin[0] + 430, info_box_origin[1] - 80),
+                                  (255, 225, 255),
+                                  cv2.FILLED)
 
-                step = 50
-                for i in range(0, len(info_text), step):
-                    cv2.putText(frame,
-                                info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
-                                (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.6,
-                                (0, 0, 0),
-                                1)
-    return frame
+                    step = 50
+                    for i in range(0, len(info_text), step):
+                        cv2.putText(frame,
+                                    info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
+                                    (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
+                                    cv2.FONT_HERSHEY_SIMPLEX,
+                                    0.6,
+                                    (0, 0, 0),
+                                    1)
+        return frame
+    except:
+        print("reached point liver")
 
 
 def overlay_left_arm_image(frame, overlay_img, landmarks):
@@ -280,121 +286,128 @@ def overlay_torso_image(frame, overlay_img, landmarks):
 
 
 def overlay_heart_image(frame, overlay_img, landmarks):
-    if landmarks:
-        left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
-        right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
-        current_time = time.time()
-        scale_factor = 1 + 0.05 * math.sin(15 * current_time)
-        heart_x_cache = int((left_shoulder.x + (1 / 2) * (right_shoulder.x - left_shoulder.x)) * frame.shape[1]) - 30
-        heart_y_cache = int((left_shoulder.y + (1 / 2) * (right_shoulder.y - left_shoulder.y)) * frame.shape[0]) + 30
+    try:
+        if landmarks:
+            left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
+            right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+            current_time = time.time()
+            scale_factor = 1 + 0.05 * math.sin(15 * current_time)
+            heart_x_cache = int((left_shoulder.x + (1 / 2) * (right_shoulder.x - left_shoulder.x)) * frame.shape[1]) - 30
+            heart_y_cache = int((left_shoulder.y + (1 / 2) * (right_shoulder.y - left_shoulder.y)) * frame.shape[0]) + 30
 
-        dist_shoulder = np.sqrt((right_shoulder.x - left_shoulder.x) ** 2 + (right_shoulder.y - left_shoulder.y) ** 2)
-        heart_width = int(scale_factor * frame.shape[1] * dist_shoulder * 0.6)
-        aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
-        heart_height = int(scale_factor * heart_width / aspect_ratio)
+            dist_shoulder = np.sqrt((right_shoulder.x - left_shoulder.x) ** 2 + (right_shoulder.y - left_shoulder.y) ** 2)
+            heart_width = int(scale_factor * frame.shape[1] * dist_shoulder * 0.6)
+            aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
+            heart_height = int(scale_factor * heart_width / aspect_ratio)
 
-        heart_image_resized = cv2.resize(overlay_img, (heart_width, heart_height), interpolation=cv2.INTER_AREA)
+            heart_image_resized = cv2.resize(overlay_img, (heart_width, heart_height), interpolation=cv2.INTER_AREA)
 
-        heart_y = min(max(heart_y_cache, 0), frame.shape[0] - heart_height)
-        heart_x = min(max(heart_x_cache, 0), frame.shape[1] - heart_width)
+            heart_y = min(max(heart_y_cache, 0), frame.shape[0] - heart_height)
+            heart_x = min(max(heart_x_cache, 0), frame.shape[1] - heart_width)
 
-        heart_channels = cv2.split(heart_image_resized)
+            heart_channels = cv2.split(heart_image_resized)
 
-        mask = cv2.cvtColor(heart_channels[3], cv2.COLOR_GRAY2BGR)
-        mask = mask / 255.0
+            mask = cv2.cvtColor(heart_channels[3], cv2.COLOR_GRAY2BGR)
+            mask = mask / 255.0
 
-        r, g, b, a = heart_channels
-        heart_channels_rgb = cv2.merge([r, g, b])
-        heart_portion = frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width]
+            r, g, b, a = heart_channels
+            heart_channels_rgb = cv2.merge([r, g, b])
+            heart_portion = frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width]
 
-        overlay = heart_channels_rgb * mask + heart_portion * (1 - mask)
-        overlay = np.uint8(overlay)
+            overlay = heart_channels_rgb * mask + heart_portion * (1 - mask)
+            overlay = np.uint8(overlay)
 
-        frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width] = overlay
-        info_text = str(heart_info)
-        # Create a rectangle for the pop up and add some text
-        info_box_origin = (heart_x_cache - 140, heart_y_cache - 20)  # Placing the info box above the heart
-        if heart_info_toggle:
-            cv2.rectangle(frame,
-                          info_box_origin,
-                          (info_box_origin[0] + 550, info_box_origin[1] - 80),
-                          (255, 225, 255),
-                          cv2.FILLED)
-            step = 50
-            for i in range(0, len(info_text), step):
-                cv2.putText(frame,
-                            info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
-                            (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            (0, 0, 0),
-                            1)
+            frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width] = overlay
+            info_text = str(heart_info)
+            # Create a rectangle for the pop up and add some text
+            info_box_origin = (heart_x_cache - 140, heart_y_cache - 20)  # Placing the info box above the heart
+            if heart_info_toggle:
+                cv2.rectangle(frame,
+                              info_box_origin,
+                              (info_box_origin[0] + 550, info_box_origin[1] - 80),
+                              (255, 225, 255),
+                              cv2.FILLED)
+                step = 50
+                for i in range(0, len(info_text), step):
+                    cv2.putText(frame,
+                                info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
+                                (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.6,
+                                (0, 0, 0),
+                                1)
 
-        return frame
+            return frame
+    except:
+        print("reached point heart")
 
 
 def overlay_respiratory_image(frame, overlay_img, landmarks):
-    if landmarks:
-        left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
-        right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
-        left_hip = landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP]
-        right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
+    try:
+        if landmarks:
+            left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
+            right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
+            left_hip = landmarks.landmark[mp_pose.PoseLandmark.LEFT_HIP]
+            right_hip = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_HIP]
 
-        # Assume that the lungs are located in the middle of these four points
-        respiratory_y_cache = int((left_shoulder.y + right_shoulder.y + left_hip.y + right_hip.y) / 4 * frame.shape[0])
-        respiratory_x_cache = int((left_shoulder.x + right_shoulder.x + left_hip.x + right_hip.x) / 4 * frame.shape[1])
+            # Assume that the lungs are located in the middle of these four points
+            respiratory_y_cache = int((left_shoulder.y + right_shoulder.y + left_hip.y + right_hip.y) / 4 * frame.shape[0])
+            respiratory_x_cache = int((left_shoulder.x + right_shoulder.x + left_hip.x + right_hip.x) / 4 * frame.shape[1])
 
-        # Calculate width and height similar to other overlay_ functions here
-        dist_shoulder = np.sqrt((right_shoulder.x - left_shoulder.x) ** 2 +
-                                (right_shoulder.y - left_shoulder.y) ** 2)
-        respiratory_width = int(frame.shape[1] * dist_shoulder*1.2)
-        aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
-        respiratory_height = int(respiratory_width / aspect_ratio)
+            # Calculate width and height similar to other overlay_ functions here
+            dist_shoulder = np.sqrt((right_shoulder.x - left_shoulder.x) ** 2 +
+                                    (right_shoulder.y - left_shoulder.y) ** 2)
+            respiratory_width = int(frame.shape[1] * dist_shoulder*1.2)
+            aspect_ratio = overlay_img.shape[1] / overlay_img.shape[0]
+            respiratory_height = int(respiratory_width / aspect_ratio)
 
-        respiratory_image_resized = cv2.resize(overlay_img, (respiratory_width, respiratory_height),
-                                               interpolation=cv2.INTER_AREA)
-        respiratory_y = min(max(respiratory_y_cache, 0), frame.shape[0] - respiratory_height)-120
-        respiratory_x = min(max(respiratory_x_cache, 0), frame.shape[1] - respiratory_width)-60
-        # Similar to other overlay_ functions here, blend the resized respiratory image with the frame
-        respiratory_channels = cv2.split(respiratory_image_resized)
-        mask = cv2.cvtColor(respiratory_channels[3], cv2.COLOR_GRAY2BGR)
-        mask = mask / 255.0
+            respiratory_image_resized = cv2.resize(overlay_img, (respiratory_width, respiratory_height),
+                                                   interpolation=cv2.INTER_AREA)
+            respiratory_y = min(max(respiratory_y_cache, 0), frame.shape[0] - respiratory_height)-120
+            respiratory_x = min(max(respiratory_x_cache, 0), frame.shape[1] - respiratory_width)-60
+            # Similar to other overlay_ functions here, blend the resized respiratory image with the frame
+            respiratory_channels = cv2.split(respiratory_image_resized)
+            mask = cv2.cvtColor(respiratory_channels[3], cv2.COLOR_GRAY2BGR)
+            mask = mask / 255.0
 
-        r, g, b, a = respiratory_channels
-        respiratory_channels_rgb = cv2.merge([r, g, b])
-        # respiratory_portion = frame[respiratory_y:respiratory_y + respiratory_height,
-        #                       respiratory_x:respiratory_x + respiratory_width]
+            r, g, b, a = respiratory_channels
+            respiratory_channels_rgb = cv2.merge([r, g, b])
+            # respiratory_portion = frame[respiratory_y:respiratory_y + respiratory_height,
+            #                       respiratory_x:respiratory_x + respiratory_width]
 
-        # # overlay = respiratory_channels_rgb * mask + respiratory_portion * (1 - mask)
-        # respiratory_y = min(max(respiratory_y, 0), frame.shape[0] - respiratory_height)
-        # respiratory_x = min(max(respiratory_x, 0), frame.shape[1] - respiratory_width)
+            # # overlay = respiratory_channels_rgb * mask + respiratory_portion * (1 - mask)
+            # respiratory_y = min(max(respiratory_y, 0), frame.shape[0] - respiratory_height)
+            # respiratory_x = min(max(respiratory_x, 0), frame.shape[1] - respiratory_width)
 
-        respiratory_portion = frame[respiratory_y:respiratory_y + respiratory_height,
-                              respiratory_x:respiratory_x + respiratory_width]
+            respiratory_portion = frame[respiratory_y:respiratory_y + respiratory_height,
+                                  respiratory_x:respiratory_x + respiratory_width]
 
-        overlay = respiratory_channels_rgb * mask + respiratory_portion * (1 - mask)
-        overlay = np.uint8(overlay)
-        frame[respiratory_y:respiratory_y + respiratory_height,
-        respiratory_x:respiratory_x + respiratory_width] = overlay
-        info_text = respiratory_info
-        info_box_origin = (respiratory_x_cache - 40, respiratory_y_cache - 100)
-        if respiratory_info_toggle:
-            cv2.rectangle(frame,
-                          info_box_origin,
-                          (info_box_origin[0] + 550, info_box_origin[1] - 80),
-                          (255, 225, 255),
-                          cv2.FILLED)
-            step = 50
-            for i in range(0, len(info_text), step):
-                cv2.putText(frame,
-                            info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
-                            (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            (0, 0, 0),
-                            1)
+            overlay = respiratory_channels_rgb * mask + respiratory_portion * (1 - mask)
+            overlay = np.uint8(overlay)
+            frame[respiratory_y:respiratory_y + respiratory_height,
+            respiratory_x:respiratory_x + respiratory_width] = overlay
+            info_text = respiratory_info
+            info_box_origin = (respiratory_x_cache - 40, respiratory_y_cache - 100)
+            if respiratory_info_toggle:
+                cv2.rectangle(frame,
+                              info_box_origin,
+                              (info_box_origin[0] + 550, info_box_origin[1] - 80),
+                              (255, 225, 255),
+                              cv2.FILLED)
+                step = 50
+                for i in range(0, len(info_text), step):
+                    cv2.putText(frame,
+                                info_text[i:i + step] if len(info_text) - i > step else info_text[i:],
+                                (info_box_origin[0] + 10, info_box_origin[1] - 65 + int(i / step * 20)),
+                                cv2.FONT_HERSHEY_SIMPLEX,
+                                0.6,
+                                (0, 0, 0),
+                                1)
 
-    return frame
+        return frame
+    except:
+        print("reached point Resp")
+        return frame
 
 
 def main():
@@ -471,13 +484,17 @@ def main():
         if skull_toggle:
             frame = overlay_skull_image(frame, skull_image, landmarks)
         mp_drawing.draw_landmarks(frame, landmarks, mp_pose.POSE_CONNECTIONS)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(frame)
-        imgtk = ImageTk.PhotoImage(image=img)
+        try:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            img = Image.fromarray(frame)
+            imgtk = ImageTk.PhotoImage(image=img)
 
-        panel.imgtk = imgtk
-        panel.configure(image=imgtk)
-        root.after(10, video_loop)
+            panel.imgtk = imgtk
+            panel.configure(image=imgtk)
+            root.after(10, video_loop)
+        except:
+            print("reached point video loop")
+            root.after(10, video_loop)
 
     video_loop()
     root.mainloop()
