@@ -296,9 +296,14 @@ def overlay_heart_image(frame, overlay_img, landmarks):
             right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
             current_time = time.time()
             print(current_time)
-            scale_factor = 1 + 0.05 * math.sin(10 * current_time)
+            # scale_factor = 1 + 0.05 * math.sin(10 * current_time)
+            bpm = 80
+            beat_length_in_seconds = 60 / bpm
+            current_time = time.time()
+            phase = (current_time % beat_length_in_seconds) / beat_length_in_seconds
+            scale_factor = 1 + 0.05 * (math.sin(2 * math.pi * phase))
             heart_x_cache = int((left_shoulder.x + (1 / 2) * (right_shoulder.x - left_shoulder.x)) * frame.shape[1]) - 30
-            heart_y_cache = int((left_shoulder.y + (1 / 2) * (right_shoulder.y - left_shoulder.y)) * frame.shape[0]) + 30
+            heart_y_cache = int((left_shoulder.y + (1 / 2) * (right_shoulder.y - left_shoulder.y)) * frame.shape[0]) - 20
 
             dist_shoulder = np.sqrt((right_shoulder.x - left_shoulder.x) ** 2 + (right_shoulder.y - left_shoulder.y) ** 2)
             heart_width = int(scale_factor * frame.shape[1] * dist_shoulder * 0.6)
@@ -325,7 +330,7 @@ def overlay_heart_image(frame, overlay_img, landmarks):
             frame[heart_y:heart_y + heart_height, heart_x:heart_x + heart_width] = overlay
             info_text = str(heart_info)
             # Create a rectangle for the pop up and add some text
-            info_box_origin = (heart_x_cache - 140, heart_y_cache - 20)  # Placing the info box above the heart
+            info_box_origin = (heart_x_cache -250, heart_y_cache - 20)  # Placing the info box above the heart
             if heart_info_toggle:
                 cv2.rectangle(frame,
                               info_box_origin,
@@ -392,7 +397,7 @@ def overlay_respiratory_image(frame, overlay_img, landmarks):
             frame[respiratory_y:respiratory_y + respiratory_height,
             respiratory_x:respiratory_x + respiratory_width] = overlay
             info_text = respiratory_info
-            info_box_origin = (respiratory_x_cache - 40, respiratory_y_cache - 100)
+            info_box_origin = (respiratory_x_cache - 250, respiratory_y_cache-200)
             if respiratory_info_toggle:
                 cv2.rectangle(frame,
                               info_box_origin,
