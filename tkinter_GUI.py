@@ -22,7 +22,7 @@ respiratory_info_toggle = False
 skull_info = """The skull is a bone protective cavity for the brain.[1] The skull is composed of four types of bone i.e., cranial bones, facial bones, ear ossicles and hyoid bone"""
 liver_info = """The liver is essential for digesting food and ridding your body of toxic substances. Liver disease can be inherited (genetic)."""
 heart_info = """The Heart pumps blood through the blood vessels of the circulatory system. The pumped blood carries oxygen and nutrients to the body, while carrying metabolic waste such as carbon dioxide to the lungs"""
-respiratory_info = """longs"""
+respiratory_info = """Pair of essential respiratory organs facilitating oxygen exchange and expelling carbon dioxide; vital for sustaining human life and located in the chest cavity."""
 
 def toggle_skull():
     global skull_toggle
@@ -62,32 +62,36 @@ def toggle_respiratory_info():
 
 def edit_skull_info():
     global skull_info
+    skull_info_og = skull_info
     skull_info = simpledialog.askstring("Edit Skull Info", "Enter new information for the skull:",
                                         initialvalue=skull_info)
     if skull_info is None:  # Restore if canceled
-        skull_info = ...
+        skull_info = skull_info_og
 
 
 def edit_liver_info():
     global liver_info
+    liver_info_og = liver_info
     liver_info = simpledialog.askstring("Edit Liver Info", "Enter new information for the liver:",
                                         initialvalue=liver_info)
     if liver_info is None:  # Restore if canceled
-        liver_info = ...
+        liver_info = liver_info_og
 
 
 def edit_heart_info():
     global heart_info
+    heart_info_og = heart_info
     heart_info = simpledialog.askstring("Edit Heart Info", "Enter new information for the heart:",
                                         initialvalue=heart_info)
     if heart_info is None:  # Restore if canceled
-        heart_info = ...
+        heart_info = heart_info_og
 def edit_respiratory_info():
     global respiratory_info
+    respiratory_info_og = respiratory_info
     respiratory_info = simpledialog.askstring("Edit respiratory Info", "Enter new information for the respiratory:",
                                         initialvalue=respiratory_info)
     if respiratory_info is None:  # Restore if canceled
-        respiratory_info = ...
+        respiratory_info = respiratory_info_og
 
 
 def load_image(image_path):
@@ -291,7 +295,8 @@ def overlay_heart_image(frame, overlay_img, landmarks):
             left_shoulder = landmarks.landmark[mp_pose.PoseLandmark.LEFT_SHOULDER]
             right_shoulder = landmarks.landmark[mp_pose.PoseLandmark.RIGHT_SHOULDER]
             current_time = time.time()
-            scale_factor = 1 + 0.05 * math.sin(15 * current_time)
+            print(current_time)
+            scale_factor = 1 + 0.05 * math.sin(10 * current_time)
             heart_x_cache = int((left_shoulder.x + (1 / 2) * (right_shoulder.x - left_shoulder.x)) * frame.shape[1]) - 30
             heart_y_cache = int((left_shoulder.y + (1 / 2) * (right_shoulder.y - left_shoulder.y)) * frame.shape[0]) + 30
 
@@ -432,7 +437,7 @@ def main():
 
     root = tk.Tk()
     height, width, _ = frame.shape
-    root.geometry(f"{width + 40}x{height + 500}")
+    root.geometry(f"{width + 80}x{height + 500}")
     root.title("AR Organ Projection")
     # root.geometry("1280x720")
     root.configure(background="light grey")
@@ -444,7 +449,7 @@ def main():
     main_frame.grid(row=1, column=0, columnspan=4, padx=10, pady=10)
 
     def create_organ_frame(parent, organ_name, toggle_command, toggle_info_command, edit_info_command):
-        frame = tk.LabelFrame(parent, text=organ_name, font=("Helvetica", 20), bg="white", bd=5)
+        frame = tk.LabelFrame(parent, text=organ_name, font=("Helvetica", 15), bg="white", bd=5)
 
         tk.Button(frame, text=f"Toggle {organ_name} Overlay", command=toggle_command, height=2, width=20,
                   bg="light green").pack(side="top", padx=5, pady=5)
@@ -456,16 +461,16 @@ def main():
         return frame
 
     skull_frame = create_organ_frame(main_frame, 'Skull', toggle_skull, toggle_skull_info, edit_skull_info)
-    skull_frame.grid(row=0, column=0, padx=15)
+    skull_frame.grid(row=0, column=0, padx=3)
 
     liver_frame = create_organ_frame(main_frame, 'Liver', toggle_liver, toggle_liver_info, edit_liver_info)
-    liver_frame.grid(row=0, column=1, padx=15)
+    liver_frame.grid(row=0, column=1, padx=3)
 
     heart_frame = create_organ_frame(main_frame, 'Heart', toggle_heart, toggle_heart_info, edit_heart_info)
-    heart_frame.grid(row=0, column=2, padx=15)
+    heart_frame.grid(row=0, column=2, padx=3)
 
     respiratory_frame = create_organ_frame(main_frame, 'respiratory', toggle_respiratory, toggle_respiratory_info, edit_respiratory_info)
-    respiratory_frame.grid(row=0, column=3, padx=15)
+    respiratory_frame.grid(row=0, column=3, padx=3)
 
     def video_loop():
         ret, frame = cap.read()

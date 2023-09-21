@@ -6,7 +6,7 @@ import glob
 image_files = [(f, '.') for f in glob.glob("D:\Projects\GE\GEHealthcare_hackathon\images\*")]
 
 a = Analysis(
-    ['tkinter_exe.py'],
+    ['GEapp_exe.py'],
     pathex=['D:\Projects\GE\GEHealthcare_hackathon\.venv\Lib\site-packages'],
     binaries=[],
     datas=[('D:\Projects\GE\GEHealthcare_hackathon\.venv\Lib\site-packages\mediapipe','mediapipe')]+image_files,
@@ -29,7 +29,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='tkinter_GUI',
+    name='Geapp',
     debug=True,
     bootloader_ignore_signals=False,
     strip=False,

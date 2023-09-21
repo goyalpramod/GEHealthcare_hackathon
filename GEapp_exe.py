@@ -6,6 +6,7 @@ import time
 import tkinter as tk
 from PIL import ImageTk, Image
 import tkinter.simpledialog as simpledialog
+import os, sys
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -22,7 +23,16 @@ respiratory_info_toggle = False
 skull_info = """The skull is a bone protective cavity for the brain.[1] The skull is composed of four types of bone i.e., cranial bones, facial bones, ear ossicles and hyoid bone"""
 liver_info = """The liver is essential for digesting food and ridding your body of toxic substances. Liver disease can be inherited (genetic)."""
 heart_info = """The Heart pumps blood through the blood vessels of the circulatory system. The pumped blood carries oxygen and nutrients to the body, while carrying metabolic waste such as carbon dioxide to the lungs"""
-respiratory_info = """longs"""
+respiratory_info = """Pair of essential respiratory organs facilitating oxygen exchange and expelling carbon dioxide; vital for sustaining human life and located in the chest cavity."""
+
+def resource_path(relative_path):
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 def toggle_skull():
     global skull_toggle
@@ -420,11 +430,14 @@ def main():
     skull_toggle = False
     liver_toggle = False
     heart_toggle = False
-
-    skull_image = load_image('skull_image.png')
-    liver_image = load_image('liver_image.png')
-    heart_image = load_image('heart_image.png')
-    respiratory_image = load_image('respiratory_image.png')
+    skull_image = resource_path('skull_image.png')
+    skull_image = load_image(skull_image)
+    liver_image = resource_path('liver_image.png')
+    liver_image = load_image(liver_image)
+    heart_image = resource_path('heart_image.png')
+    heart_image = load_image(heart_image)
+    respiratory_image = resource_path('respiratory_image.png')
+    respiratory_image = load_image(respiratory_image)
     # left_arm_image = load_image('left_arm.png')
     # torso_image = load_image('images/torso.png')
     cap = cv2.VideoCapture(0)
