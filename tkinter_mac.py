@@ -73,7 +73,7 @@ def edit_liver_info():
     liver_info = simpledialog.askstring("Edit Liver Info", "Enter new information for the liver:",
                                         initialvalue=liver_info)
     if liver_info is None:  # Restore if canceled
-        liver_info = ...
+        liver_info = ""
 
 
 def edit_heart_info():
@@ -81,7 +81,7 @@ def edit_heart_info():
     heart_info = simpledialog.askstring("Edit Heart Info", "Enter new information for the heart:",
                                         initialvalue=heart_info)
     if heart_info is None:  # Restore if canceled
-        heart_info = ...
+        heart_info = ""
 def edit_respiratory_info():
     global respiratory_info
     respiratory_info = simpledialog.askstring("Edit respiratory Info", "Enter new information for the respiratory:",
@@ -498,7 +498,8 @@ def main():
             cap.release()
             cv2.destroyAllWindows()
         except Exception as e:
-            pass
+            print(e)
+            # pass
 
 if __name__ == "__main__":
     main()
